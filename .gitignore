@@ -4,3 +4,5 @@ out*.jpg
 out*.png
 _book/
 node_modules/
+.idea
+.vscode
