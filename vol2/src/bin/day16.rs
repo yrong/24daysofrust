@@ -1,10 +1,12 @@
 extern crate git2;
-extern crate time;
+extern crate chrono;
 
 use git2::{Commit, Direction, ObjectType, Oid, Repository, Signature};
 use std::fs::{canonicalize, File};
 use std::io::Write;
 use std::path::Path;
+use chrono::prelude::*;
+use chrono::offset::LocalResult;
 
 fn find_last_commit(repo: &Repository) -> Result<Commit, git2::Error> {
     let obj = repo.head()?.resolve()?.peel(ObjectType::Commit)?;
@@ -14,12 +16,12 @@ fn find_last_commit(repo: &Repository) -> Result<Commit, git2::Error> {
 
 fn display_commit(commit: &Commit) {
     let timestamp = commit.time().seconds();
-    let tm = time::at(time::Timespec::new(timestamp, 0));
+    let tm = Utc.timestamp(timestamp,0);//time::at(time::Timespec::new(timestamp, 0));
     println!(
         "commit {}\nAuthor: {}\nDate:   {}\n\n    {}",
         commit.id(),
         commit.author(),
-        tm.rfc822(),
+        tm.to_rfc2822(),
         commit.message().unwrap_or("no commit message")
     );
 }
@@ -42,9 +44,9 @@ fn add_and_commit(repo: &Repository, path: &Path, message: &str) -> Result<Oid, 
 }
 
 fn push(repo: &Repository, url: &str) -> Result<(), git2::Error> {
-    let mut remote = match repo.find_remote("origin") {
+    let mut remote = match repo.find_remote("yrong") {
         Ok(r) => r,
-        Err(_) => repo.remote("origin", url)?,
+        Err(_) => repo.remote("yrong", url)?,
     };
     remote.connect(Direction::Push)?;
     remote.push(&["refs/heads/master:refs/heads/master"], None)
@@ -68,10 +70,11 @@ fn main() {
         .expect("Couldn't add file to repo");
     println!("New commit: {}", commit_id);
 
-    let remote_url = format!(
-        "file://{}",
-        canonicalize("../../git_remote").unwrap().display()
-    );
+    let remote_url = "git@github.com:yrong/24daysofrust.git";
+    // format!(
+    //     "file://{}",
+    //     canonicalize(".git/config").unwrap().display()
+    // );
     println!("Pushing to: {}", remote_url);
-    push(&repo, remote_url.as_str()).expect("Couldn't push to remote repo");
+    // push(&repo, remote_url).expect("Couldn't push to remote repo");
 }

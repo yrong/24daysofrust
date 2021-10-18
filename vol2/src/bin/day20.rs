@@ -6,7 +6,7 @@ extern crate serde_json;
 use std::collections::HashMap;
 use std::io::{copy, Read, stdout};
 
-use reqwest::header::{Authorization, Basic};
+use reqwest::RequestBuilder;
 
 #[derive(Debug, Deserialize)]
 struct Move {
@@ -28,13 +28,14 @@ struct Pokemon {
     moves: Vec<PokemonMove>,
 }
 
+
 fn main() {
     println!("24 Days of Rust vol. 2 - reqwest");
     let mut response =
-        reqwest::get("https://httpbin.org/status/418").expect("Failed to send request");
+        reqwest::blocking::get("https://httpbin.org/status/418").expect("Failed to send request");
     println!("{}", response.status());
     for header in response.headers().iter() {
-        println!("{}: {}", header.name(), header.value_string());
+        println!("{}", header.0);
     }
     let mut buf = String::new();
     response.read_to_string(&mut buf).expect(
@@ -43,7 +44,7 @@ fn main() {
     println!("{}", buf);
     copy(&mut response, &mut stdout()).expect("Failed to read response");
 
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
     let mut params = HashMap::new();
     params.insert("name", "Sir Lancelot");
     params.insert("quest", "to seek the Holy Grail");
@@ -60,7 +61,7 @@ fn main() {
     println!("{}", buf);
 
     let mut response = client
-        .request(reqwest::Method::Put, "https://httpbin.org/put")
+        .request(reqwest::Method::PUT, "https://httpbin.org/put")
         .json(&params)
         .send()
         .expect("Failed to send request");
@@ -70,22 +71,22 @@ fn main() {
     );
     println!("{}", buf);
 
-    let response = client
-        .get("https://httpbin.org/basic-auth/user/passwd")
-        .send()
-        .expect("Failed to send request");
-    println!("{}", response.status());
-
-    let credentials = Basic {
-        username: "user".to_string(),
-        password: Some("passwd".to_string()),
-    };
-    let response = client
-        .get("https://httpbin.org/basic-auth/user/passwd")
-        .header(Authorization(credentials))
-        .send()
-        .expect("Failed to send request");
-    println!("{}", response.status());
+    // let response = client
+    //     .get("https://httpbin.org/basic-auth/user/passwd")
+    //     .send()
+    //     .expect("Failed to send request");
+    // println!("{}", response.status());
+    //
+    // let credentials = Basic {
+    //     username: "user".to_string(),
+    //     password: Some("passwd".to_string()),
+    // };
+    //
+    // let response = client
+    //     .get("https://httpbin.org/basic-auth/user/passwd")
+    //     .send()
+    //     .expect("Failed to send request");
+    // println!("{}", response.status());
 
     let mut response = client
         .get("http://pokeapi.co/api/v2/pokemon/111")
